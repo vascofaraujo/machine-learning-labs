@@ -22,7 +22,6 @@ print(f"xtrain shape: {xtrain.shape}\nytrain shape: {ytrain.shape}\n\n")
 xtest = np.load("xtest.npy")
 
 
-
 df = pd.DataFrame(xtrain)
 df['y'] = ytrain
 

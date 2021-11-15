@@ -29,9 +29,14 @@ df = pd.DataFrame(xtrain)
 df['y'] = ytrain
 
 
-possible_outliers_percentage = np.arange(0.1,0.3,0.001)
-print(possible_outliers_percentage)
+possible_outliers_percentage = np.arange(0,0.95,0.002)
 
+best_model = {
+            "model": "linear",
+            "outlier_percentage": 1.0,
+            "best_mse": 1.0
+             }
+all_lin_mse = []
 for outliers_percentage in possible_outliers_percentage:
     xtrain = np.load("Xtrain_Regression_Part2.npy")
     ytrain = np.load("Ytrain_Regression_Part2.npy")
@@ -73,6 +78,12 @@ for outliers_percentage in possible_outliers_percentage:
 
     lin_mse = eval.scores(y_test,y_linear,"r")
 
+    all_lin_mse.append(lin_mse)
+
+    if lin_mse < best_model["best_mse"]:
+        best_model["model"] = linear_model
+        best_model["outlier_percentage"] = outliers_percentage
+        best_model["best_mse"] = lin_mse
 
     # Ridge
     ridge_model = Ridge()
@@ -82,6 +93,11 @@ for outliers_percentage in possible_outliers_percentage:
     y_ridge = ridge_model.predict(X_test)
 
     ridge_mse = eval.scores(y_test,y_ridge,"r")
+
+    if ridge_mse < best_model["best_mse"]:
+        best_model["model"] = ridge_model
+        best_model["outlier_percentage"] = outliers_percentage
+        best_model["best_mse"] = ridge_mse
 
     # Lasso
     lasso_model = Lasso()
@@ -94,34 +110,46 @@ for outliers_percentage in possible_outliers_percentage:
 
     lasso_mse = eval.scores(y_test,y_lasso,"r")
 
+    if lasso_mse < best_model["best_mse"]:
+        best_model["model"] = lasso_model
+        best_model["outlier_percentage"] = outliers_percentage
+        best_model["best_mse"] = lasso_mse
+
 
     print(f"\nOutlier percentage: {outliers_percentage}, linear: {lin_mse}\n ridge: {ridge_mse}\nlasso: {lasso_mse}")
 
 
     k=5
 
-    cv = KFold(n_splits=k)
+    if outliers_percentage < 0.9:
 
-    lin_mse_list = []
-    for train, test in cv.split(xtrain, ytrain):
+        cv = KFold(n_splits=5)
 
-        y_test = ytrain[test]
+        lin_mse_list = []
+        for train, test in cv.split(xtrain, ytrain):
 
-        y_linear = linear_model.predict(xtrain[test])
+            y_test = ytrain[test]
 
-        lin_mse = eval.scores(y_test,y_linear,"r")
+            y_linear = linear_model.predict(xtrain[test])
 
-        lin_mse_list.append(lin_mse)
-    lin_mse_10avg = np.average(lin_mse_list)
-    print(f"MSE with KFold: {lin_mse_10avg}")
+            lin_mse = eval.scores(y_test,y_linear,"r")
+
+            lin_mse_list.append(lin_mse)
+        lin_mse_10avg = np.average(lin_mse_list)
+        print(f"MSE with KFold: {lin_mse_10avg}")
 
 
 
-
+print(best_model)
+plt.plot(possible_outliers_percentage, all_lin_mse)
+plt.xlabel("Outliers percentage")
+plt.ylabel("Linear MSE")
+plt.title("Plot of MSE of best model - Linear")
+plt.show()
 
 #########################################################
 # Predictions
-best_outlier_percentage = 0.29800000000000015
+best_outlier_percentage = best_model["outlier_percentage"]
 
 xtrain = np.load("Xtrain_Regression_Part2.npy")
 ytrain = np.load("Ytrain_Regression_Part2.npy")
@@ -149,7 +177,8 @@ xtrain = df.loc[:, df.columns!='y'].to_numpy()
 ytrain = df.loc[:, df.columns=='y'].to_numpy()
 
 
-# Linear
-linear_model = LinearRegression().fit(xtrain, ytrain)
+best_model = best_model["model"]
+np.save("test_predictions.npy", best_model.predict(xtest))
 
-np.save("test_predictions.npy", lasso_model.predict(xtest))
+predictions = np.load("test_predictions.npy")
+print(f"Test predictions: {predictions}")
