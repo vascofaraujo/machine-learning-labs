@@ -191,7 +191,7 @@ cnn.add(tf.keras.layers.Dense(1620,activation='relu'))
 cnn.add(tf.keras.layers.Dense(4,activation='softmax'))
 
 cnn.summary()
-
+#%%
 
 early_stop = tf.keras.callbacks.EarlyStopping(patience=10,
                                               restore_best_weights=True)
