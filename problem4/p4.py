@@ -60,6 +60,8 @@ weights = dict(enumerate(weights))
 xtrain, xval, ytrain, yval = train_test_split(
             xtrain, ytrain, test_size=0.2, train_size=0.8)
 
+ytrain1=ytrain
+
 #Convert train labels to one-hot encoding
 yval = tf.keras.utils.to_categorical(yval, 4)
 ytrain = tf.keras.utils.to_categorical(ytrain, 4)
@@ -74,8 +76,8 @@ ytrain = tf.keras.utils.to_categorical(ytrain, 4)
 # MLP 
 
 mlp = tf.keras.Sequential()
-mlp.add(tf.keras.layers.Dense(64,input_shape=(2500,),activation='relu'))
-mlp.add(tf.keras.layers.Dense(16,activation='relu'))
+mlp.add(tf.keras.layers.Dense(625,input_shape=(2500,),activation='relu'))
+mlp.add(tf.keras.layers.Dense(500,activation='relu'))
 mlp.add(tf.keras.layers.Dense(4,activation='softmax'))
 mlp.summary()
 
@@ -86,7 +88,7 @@ early_stop = tf.keras.callbacks.EarlyStopping(patience=10,restore_best_weights=T
 mlp.compile(optimizer='Adam', loss='categorical_crossentropy')
 
 
-fit = mlp.fit(xtrain, ytrain, validation_data=(xval, yval), batch_size=200, epochs=200, callbacks=[early_stop], class_weight=weights)
+fit = mlp.fit(xtrain, ytrain, validation_data=(xval, yval), batch_size=200, epochs=200, callbacks=[early_stop])
 #fit = mlp.fit(xtrain, ytrain, validation_data=(xval, yval), batch_size=200, epochs=200)
 
 
@@ -101,8 +103,11 @@ plt.show()
 
 #%%
 
-predict_labels = mlp.predict(xtest, batch_size=200)
+predict_labels = mlp.predict(xtrain, batch_size=200)
 predict_labels_index = np.argmax(predict_labels, axis=1)
+
+
+print('Accuracy: ', accuracy_score(ytrain1, predict_labels_index))
 
 np.save("y.npy", predict_labels_index)
 
@@ -160,6 +165,8 @@ xtest /= 255
 xtrain, xval, ytrain, yval = train_test_split(
             xtrain, ytrain, test_size=0.2, train_size=0.8)
 
+ytrain1=ytrain
+
 #Convert train labels to one-hot encoding
 yval = tf.keras.utils.to_categorical(yval, 4)
 ytrain = tf.keras.utils.to_categorical(ytrain, 4)
@@ -169,22 +176,22 @@ ytrain = tf.keras.utils.to_categorical(ytrain, 4)
 
 cnn = tf.keras.Sequential()
 #layer 0
-cnn.add(tf.keras.layers.Conv2D(64, kernel_size=3, activation='linear', input_shape = (50,50,1)))
+cnn.add(tf.keras.layers.Conv2D(10, kernel_size=5, activation='relu', input_shape = (50,50,1)))
 #layer 1
 cnn.add(tf.keras.layers.MaxPooling2D(pool_size=2))
 #layer 2
-cnn.add(tf.keras.layers.Conv2D(8, kernel_size=3, activation='relu'))
+cnn.add(tf.keras.layers.Conv2D(20, kernel_size=5, activation='relu'))
 #layer 3
 cnn.add(tf.keras.layers.MaxPooling2D(pool_size=2))
 #layer 4
 cnn.add(tf.keras.layers.Flatten())
 #layer 5
-cnn.add(tf.keras.layers.Dense(8,activation='linear'))
+cnn.add(tf.keras.layers.Dense(1620,activation='relu'))
 #layer 6
 cnn.add(tf.keras.layers.Dense(4,activation='softmax'))
 
 cnn.summary()
-
+#%%
 
 early_stop = tf.keras.callbacks.EarlyStopping(patience=10,
                                               restore_best_weights=True)
@@ -204,9 +211,12 @@ plt.ylabel('Loss')
 plt.legend(['Training loss', 'Validation loss'])
 plt.show()
 
-
-predict_probs = cnn.predict(xtest, batch_size=200)
+#%%
+predict_probs = cnn.predict(xtrain, batch_size=200)
 predict_labels = np.argmax(predict_probs, axis=1)
+
+print('Accuracy: ', accuracy_score(ytrain1, predict_labels))
+
 
 #%%
 np.save("y.npy", predict_labels_index)
